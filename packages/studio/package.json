@@ -20,7 +20,7 @@
 		"url": "https://github.com/remotion-dev/remotion/issues"
 	},
 	"dependencies": {
-		"semver": "7.5.3",
+		"semver": "7.5.4",
 		"remotion": "workspace:*",
 		"@remotion/player": "workspace:*",
 		"@remotion/media-utils": "workspace:*",
