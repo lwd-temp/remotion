@@ -63,6 +63,11 @@ export const isFlakyError = (err: Error): boolean => {
 		return true;
 	}
 
+	// CDN slowness
+	if (message.includes('Loading root component')) {
+		return true;
+	}
+
 	// Internet flakiness
 	if (
 		message.includes('getaddrinfo') ||
@@ -72,10 +77,11 @@ export const isFlakyError = (err: Error): boolean => {
 		return true;
 	}
 
-	if (
-		message?.includes('Target closed') ||
-		message?.includes('Session closed')
-	) {
+	if (message.includes('Target closed') || message.includes('Session closed')) {
+		return true;
+	}
+
+	if (message.includes('SIGKILL')) {
 		return true;
 	}
 

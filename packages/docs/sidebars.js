@@ -84,6 +84,7 @@ module.exports = {
       items: [
         "absolute-fill",
         "audio",
+        "artifact",
         "calculate-metadata",
         "cancel-render",
         "composition",
@@ -287,6 +288,15 @@ module.exports = {
     },
     {
       type: "category",
+      label: "@remotion/enable-scss",
+      link: {
+        type: "doc",
+        id: "enable-scss/overview",
+      },
+      items: ["enable-scss/enable-scss"],
+    },
+    {
+      type: "category",
       label: "@remotion/three",
       link: {
         type: "doc",
@@ -430,9 +440,15 @@ module.exports = {
       },
       items: [
         "studio/get-static-files",
+        "studio/watch-public-folder",
         "studio/watch-static-file",
         "studio/write-static-file",
+        "studio/delete-static-file",
+        "studio/restart-studio",
         "studio/save-default-props",
+        "studio/update-default-props",
+        "studio/focus-default-props-path",
+        "studio/reevaluate-composition",
       ],
     },
     {
@@ -444,6 +460,7 @@ module.exports = {
       },
       items: [
         "transitions/transitionseries",
+        "transitions/use-transition-progress",
         {
           type: "category",
           label: "Timings",
@@ -470,6 +487,7 @@ module.exports = {
             "transitions/presentations/wipe",
             "transitions/presentations/flip",
             "transitions/presentations/clock-wipe",
+            "transitions/presentations/none",
             {
               type: "doc",
               id: "transitions/presentations/cube",
@@ -530,6 +548,16 @@ module.exports = {
         "install-whisper-cpp/convert-to-captions",
       ],
     },
+    {
+      type: "category",
+      label: "@remotion/fonts",
+      link: {
+        type: "doc",
+
+        id: "fonts-api/fonts-api",
+      },
+      items: ["fonts-api/load-font"],
+    },
   ],
   mainSidebar: [
     {
@@ -559,6 +587,7 @@ module.exports = {
         "audio-visualization",
         "noise-visualization",
         "video-manipulation",
+        "animation-math",
       ],
     },
     {
@@ -598,10 +627,12 @@ module.exports = {
         "transparent-videos",
         "render-as-gif",
         "overlay",
+        "quality",
         "dataset-render",
         "render-all",
         "miscellaneous/video-formats",
         "video-vs-offthreadvideo",
+        "artifacts",
       ],
     },
     {
@@ -646,6 +677,7 @@ module.exports = {
         "player/best-practices",
       ],
     },
+
     {
       type: "category",
       label: "Lambda",
@@ -704,6 +736,7 @@ module.exports = {
         "lambda/serverless-framework-integration",
         "lambda/insights",
         "lambda/multiple-buckets",
+        "lambda/how-lambda-works",
         "lambda/bucket-naming",
         "lambda/optimizing-cost",
         "lambda/optimizing-speed",
@@ -787,6 +820,8 @@ module.exports = {
         "troubleshooting/delay-render-proxy",
         "troubleshooting/bundling-bundle",
         "troubleshooting/browser-launch",
+        "troubleshooting/sigkill",
+        "troubleshooting/could-not-find-executable-to-run",
       ],
     },
     {
@@ -797,18 +832,22 @@ module.exports = {
         "miscellaneous/snippets/player-in-iframe",
         "miscellaneous/snippets/fps-converter",
         "miscellaneous/snippets/use-delay-render",
-        "miscellaneous/snippets/adding-animations",
         "miscellaneous/snippets/offthread-video-while-rendering",
         "miscellaneous/snippets/hls",
         "miscellaneous/snippets/combine-compositions",
         "miscellaneous/snippets/align-duration",
       ],
     },
-
     {
       type: "link",
       href: "/docs/api",
       label: "API Reference",
+    },
+    "upgrading",
+    {
+      type: "link",
+      href: "/docs/recorder",
+      label: "Recorder",
     },
     {
       type: "category",
@@ -879,6 +918,7 @@ module.exports = {
         "chromium-flags",
         "miscellaneous/changing-temp-dir",
         "miscellaneous/chrome-headless-shell",
+        "miscellaneous/linux-dependencies",
         "gl-options",
         "bun",
         "standalone",
@@ -912,6 +952,7 @@ module.exports = {
         "contributing/presentation",
         "authoring-packages",
         "prereleases",
+        "contributing/ineligible",
       ],
     },
     "license",
@@ -925,9 +966,19 @@ module.exports = {
         "recorder/index",
         "recorder/before-you-buy",
         "recorder/buy",
+        "recorder/demo",
         "recorder/setup",
         "recorder/create",
-        "recorder/record",
+        {
+          type: "category",
+          label: "Record",
+          items: [
+            "recorder/record/index",
+            "recorder/record/manually",
+            "recorder/record/delete",
+            "recorder/record/cropping",
+          ],
+        },
         "recorder/captions",
         {
           type: "category",
@@ -935,6 +986,7 @@ module.exports = {
           collapsed: false,
           items: [
             "recorder/editing/editing",
+            "recorder/editing/silence-removal",
             "recorder/editing/captions",
             "recorder/editing/layout",
             "recorder/editing/scenes",
@@ -943,12 +995,31 @@ module.exports = {
             "recorder/editing/chapters",
             "recorder/editing/music",
             "recorder/editing/b-roll",
+            "recorder/editing/cutting-clips",
+            "recorder/editing/normalizing-audio",
           ],
         },
-        "recorder/exporting",
-        "recorder/lambda-rendering",
+        {
+          type: "category",
+          label: "Exporting",
+          collapsed: false,
+          items: [
+            "recorder/exporting",
+            "recorder/lambda-rendering",
+            "recorder/exporting-subtitles",
+          ],
+        },
         "recorder/source-control",
+        "recorder/external-recordings",
         "recorder/upgrading",
+        {
+          type: "category",
+          label: "Troubleshooting",
+          items: [
+            "recorder/troubleshooting/failed-to-execute-get-video-metadata",
+            "recorder/troubleshooting/cannot-read-properties-of-undefined",
+          ],
+        },
         "recorder/roadmap",
         "recorder/gear",
         "recorder/our-recorder",

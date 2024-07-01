@@ -82,6 +82,7 @@ const PlayerUI: React.ForwardRefRenderFunction<
 		readonly posterFillMode: PosterFillMode;
 		readonly bufferStateDelayInMilliseconds: number;
 		readonly hideControlsWhenPointerDoesntMove: boolean | number;
+		readonly overflowVisible: boolean;
 	}
 > = (
 	{
@@ -115,6 +116,7 @@ const PlayerUI: React.ForwardRefRenderFunction<
 		posterFillMode,
 		bufferStateDelayInMilliseconds,
 		hideControlsWhenPointerDoesntMove,
+		overflowVisible,
 	},
 	ref,
 ) => {
@@ -184,7 +186,7 @@ const PlayerUI: React.ForwardRefRenderFunction<
 	}, []);
 
 	const toggle = useCallback(
-		(e?: SyntheticEvent) => {
+		(e?: SyntheticEvent | PointerEvent) => {
 			if (player.isPlaying()) {
 				player.pause();
 			} else {
@@ -300,6 +302,7 @@ const PlayerUI: React.ForwardRefRenderFunction<
 		let stopped = false;
 
 		const onBuffer = () => {
+			stopped = false;
 			requestAnimationFrame(() => {
 				if (bufferStateDelayInMilliseconds === 0) {
 					setShowBufferState(true);
@@ -436,16 +439,22 @@ const PlayerUI: React.ForwardRefRenderFunction<
 	const VideoComponent = video ? video.component : null;
 
 	const outerStyle: React.CSSProperties = useMemo(() => {
-		return calculateOuterStyle({canvasSize, config, style});
-	}, [canvasSize, config, style]);
+		return calculateOuterStyle({canvasSize, config, style, overflowVisible});
+	}, [canvasSize, config, overflowVisible, style]);
 
 	const outer = useMemo(() => {
-		return calculateOuter({config, layout, scale});
-	}, [config, layout, scale]);
+		return calculateOuter({config, layout, scale, overflowVisible});
+	}, [config, layout, overflowVisible, scale]);
 
 	const containerStyle: React.CSSProperties = useMemo(() => {
-		return calculateContainerStyle({canvasSize, config, layout, scale});
-	}, [canvasSize, config, layout, scale]);
+		return calculateContainerStyle({
+			canvasSize,
+			config,
+			layout,
+			scale,
+			overflowVisible,
+		});
+	}, [canvasSize, config, layout, overflowVisible, scale]);
 
 	const onError = useCallback(
 		(error: Error) => {
@@ -475,7 +484,7 @@ const PlayerUI: React.ForwardRefRenderFunction<
 		);
 
 	const onSingleClick = useCallback(
-		(e: SyntheticEvent) => {
+		(e: SyntheticEvent | PointerEvent) => {
 			toggle(e);
 		},
 		[toggle],
@@ -497,11 +506,12 @@ const PlayerUI: React.ForwardRefRenderFunction<
 		}
 	}, [exitFullscreen, isFullscreen, requestFullscreen]);
 
-	const [handleClick, handleDoubleClick] = useClickPreventionOnDoubleClick(
-		onSingleClick,
-		onDoubleClick,
-		doubleClickToFullscreen && allowFullscreen && supportsFullScreen,
-	);
+	const {handlePointerDown, handleDoubleClick} =
+		useClickPreventionOnDoubleClick(
+			onSingleClick,
+			onDoubleClick,
+			doubleClickToFullscreen && allowFullscreen && supportsFullScreen,
+		);
 
 	useEffect(() => {
 		if (shouldAutoplay) {
@@ -566,7 +576,7 @@ const PlayerUI: React.ForwardRefRenderFunction<
 		<>
 			<div
 				style={outer}
-				onPointerUp={clickToPlay ? handleClick : undefined}
+				onPointerDown={clickToPlay ? handlePointerDown : undefined}
 				onDoubleClick={doubleClickToFullscreen ? handleDoubleClick : undefined}
 			>
 				<div style={containerStyle} className={PLAYER_CSS_CLASSNAME}>
@@ -589,7 +599,7 @@ const PlayerUI: React.ForwardRefRenderFunction<
 								width: config.width,
 								height: config.height,
 							}}
-							onPointerUp={clickToPlay ? handleClick : undefined}
+							onPointerDown={clickToPlay ? handlePointerDown : undefined}
 							onDoubleClick={
 								doubleClickToFullscreen ? handleDoubleClick : undefined
 							}
@@ -602,7 +612,7 @@ const PlayerUI: React.ForwardRefRenderFunction<
 			{shouldShowPoster && posterFillMode === 'player-size' ? (
 				<div
 					style={outer}
-					onPointerUp={clickToPlay ? handleClick : undefined}
+					onPointerDown={clickToPlay ? handlePointerDown : undefined}
 					onDoubleClick={
 						doubleClickToFullscreen ? handleDoubleClick : undefined
 					}
@@ -637,7 +647,7 @@ const PlayerUI: React.ForwardRefRenderFunction<
 					onDoubleClick={
 						doubleClickToFullscreen ? handleDoubleClick : undefined
 					}
-					onPointerUp={clickToPlay ? handleClick : undefined}
+					onPointerDown={clickToPlay ? handlePointerDown : undefined}
 				/>
 			) : null}
 		</>

@@ -11,6 +11,7 @@ import {EditorContent} from './EditorContent';
 import {GlobalKeybindings} from './GlobalKeybindings';
 import {Modals} from './Modals';
 import {NotificationCenter} from './Notifications/NotificationCenter';
+import {TopPanel} from './TopPanel';
 
 const background: React.CSSProperties = {
 	backgroundColor: BACKGROUND,
@@ -24,7 +25,8 @@ const background: React.CSSProperties = {
 const DEFAULT_BUFFER_STATE_DELAY_IN_MILLISECONDS = 300;
 
 export const BUFFER_STATE_DELAY_IN_MILLISECONDS =
-	typeof process.env.BUFFER_STATE_DELAY_IN_MILLISECONDS === 'undefined'
+	typeof process.env.BUFFER_STATE_DELAY_IN_MILLISECONDS === 'undefined' ||
+	process.env.BUFFER_STATE_DELAY_IN_MILLISECONDS === null
 		? DEFAULT_BUFFER_STATE_DELAY_IN_MILLISECONDS
 		: Number(process.env.BUFFER_STATE_DELAY_IN_MILLISECONDS);
 
@@ -82,15 +84,17 @@ export const Editor: React.FC<{
 					<div style={background}>
 						{canvasMounted ? <MemoRoot /> : null}
 						<Internals.CanUseRemotionHooksProvider>
-							<EditorContent
-								drawRef={drawRef}
-								size={size}
-								onMounted={onMounted}
-								readOnlyStudio={readOnlyStudio}
-								bufferStateDelayInMilliseconds={
-									BUFFER_STATE_DELAY_IN_MILLISECONDS
-								}
-							/>
+							<EditorContent readOnlyStudio={readOnlyStudio}>
+								<TopPanel
+									size={size}
+									drawRef={drawRef}
+									bufferStateDelayInMilliseconds={
+										BUFFER_STATE_DELAY_IN_MILLISECONDS
+									}
+									onMounted={onMounted}
+									readOnlyStudio={readOnlyStudio}
+								/>
+							</EditorContent>
 							<GlobalKeybindings />
 						</Internals.CanUseRemotionHooksProvider>
 					</div>

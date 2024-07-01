@@ -21,6 +21,7 @@ type SetPropsAndEnv = {
 	videoEnabled: boolean;
 	indent: boolean;
 	logLevel: LogLevel;
+	onServeUrlVisited: () => void;
 };
 
 const innerSetPropsAndEnv = async ({
@@ -36,6 +37,7 @@ const innerSetPropsAndEnv = async ({
 	videoEnabled,
 	indent,
 	logLevel,
+	onServeUrlVisited,
 }: SetPropsAndEnv): Promise<void> => {
 	validatePuppeteerTimeout(timeoutInMilliseconds);
 	const actualTimeout = timeoutInMilliseconds ?? DEFAULT_TIMEOUT;
@@ -46,6 +48,18 @@ const innerSetPropsAndEnv = async ({
 
 	await page.evaluateOnNewDocument((timeout: number) => {
 		window.remotion_puppeteerTimeout = timeout;
+
+		// To make getRemotionEnvironment() work
+		if (window.process === undefined) {
+			// @ts-expect-error
+			window.process = {};
+		}
+
+		if (window.process.env === undefined) {
+			window.process.env = {};
+		}
+
+		window.process.env.NODE_ENV = 'production';
 	}, actualTimeout);
 
 	await page.evaluateOnNewDocument((input: string) => {
@@ -134,6 +148,7 @@ const innerSetPropsAndEnv = async ({
 			videoEnabled,
 			indent,
 			logLevel,
+			onServeUrlVisited,
 		});
 	};
 
@@ -148,6 +163,8 @@ const innerSetPropsAndEnv = async ({
 			`Error while getting compositions: Tried to go to ${urlToVisit} but the status code was ${status} instead of 200. Does the site you specified exist?`,
 		);
 	}
+
+	onServeUrlVisited();
 
 	const {value: isRemotionFn} = await puppeteerEvaluateWithCatch<
 		(typeof window)['getStaticCompositions']

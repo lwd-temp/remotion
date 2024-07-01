@@ -9,6 +9,7 @@ export type RemotionMainVideoProps = {
 	 * @deprecated Only for internal `transparent` use
 	 */
 	_remotionInternalNativeLoopPassed?: boolean;
+	_remotionDebugSeeking?: boolean;
 };
 
 export type RemotionVideoProps = Omit<
@@ -16,7 +17,7 @@ export type RemotionVideoProps = Omit<
 		React.VideoHTMLAttributes<HTMLVideoElement>,
 		HTMLVideoElement
 	>,
-	'autoPlay' | 'controls' | 'onEnded' | 'nonce'
+	'autoPlay' | 'controls' | 'onEnded' | 'nonce' | 'onError'
 > & {
 	name?: string;
 	volume?: VolumeProp;
@@ -29,6 +30,7 @@ export type RemotionVideoProps = Omit<
 	delayRenderTimeoutInMilliseconds?: number;
 	loopVolumeCurveBehavior?: LoopVolumeCurveBehavior;
 	delayRenderRetries?: number;
+	onError?: (err: Error) => void;
 };
 
 type DeprecatedOffthreadVideoProps = {
@@ -47,7 +49,7 @@ export type OffthreadVideoProps = {
 	volume?: VolumeProp;
 	playbackRate?: number;
 	muted?: boolean;
-	onError?: React.ReactEventHandler<HTMLVideoElement | HTMLImageElement>;
+	onError?: (err: Error) => void;
 	acceptableTimeShiftInSeconds?: number;
 	allowAmplificationDuringRender?: boolean;
 	toneFrequency?: number;
@@ -56,6 +58,7 @@ export type OffthreadVideoProps = {
 	pauseWhenBuffering?: boolean;
 	loopVolumeCurveBehavior?: LoopVolumeCurveBehavior;
 	delayRenderTimeoutInMilliseconds?: number;
+	delayRenderRetries?: number;
 	/**
 	 * @deprecated For internal use only
 	 */

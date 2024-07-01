@@ -53,6 +53,7 @@ import {prespawnFfmpeg} from './prespawn-ffmpeg';
 import {shouldUseParallelEncoding} from './prestitcher-memory-usage';
 import type {ProResProfile} from './prores-profile';
 import {validateSelectedCodecAndProResCombination} from './prores-profile';
+import type {OnArtifact} from './render-frames';
 import {internalRenderFrames} from './render-frames';
 import {
 	disableRepro,
@@ -61,6 +62,7 @@ import {
 	isReproEnabled,
 } from './repro';
 import {internalStitchFramesToVideo} from './stitch-frames-to-video';
+import {succeedOrCancel} from './succeed-or-cancel';
 import type {OnStartData} from './types';
 import {validateFps} from './validate';
 import {validateEvenDimensionsWithCodec} from './validate-even-dimensions-with-codec';
@@ -124,6 +126,7 @@ export type InternalRenderMediaOptions = {
 	concurrency: number | string | null;
 	binariesDirectory: string | null;
 	compositionStart: number;
+	onArtifact: OnArtifact | null;
 } & MoreRenderMediaOptions;
 
 type Prettify<T> = {
@@ -178,6 +181,7 @@ export type RenderMediaOptions = Prettify<{
 	colorSpace?: ColorSpace;
 	repro?: boolean;
 	binariesDirectory?: string | null;
+	onArtifact?: OnArtifact;
 }> &
 	Partial<MoreRenderMediaOptions>;
 
@@ -240,6 +244,7 @@ const internalRenderMediaRaw = ({
 	forSeamlessAacConcatenation,
 	compositionStart,
 	onBrowserDownload,
+	onArtifact,
 }: InternalRenderMediaOptions): Promise<RenderMediaResult> => {
 	if (repro) {
 		enableRepro({
@@ -292,7 +297,7 @@ const internalRenderMediaRaw = ({
 
 	validateFfmpegOverride(ffmpegOverride);
 
-	validateEveryNthFrame(everyNthFrame, codec);
+	validateEveryNthFrame(everyNthFrame);
 	validateNumberOfGifLoops(numberOfGifLoops, codec);
 
 	let stitchStage: StitchingState = 'encoding';
@@ -488,7 +493,9 @@ const internalRenderMediaRaw = ({
 		}
 	};
 
-	const waitForPrestitcherIfNecessary = async () => {
+	const waitForPrestitcherIfNecessary = async (): Promise<{
+		usesParallelEncoding: boolean;
+	}> => {
 		if (stitcherFfmpeg) {
 			await waitForFinish();
 			stitcherFfmpeg?.stdin?.end();
@@ -498,6 +505,8 @@ const internalRenderMediaRaw = ({
 				throw new Error(preStitcher?.getLogs());
 			}
 		}
+
+		return {usesParallelEncoding: Boolean(stitcherFfmpeg)};
 	};
 
 	const mediaSupport = codecSupportsMedia(codec);
@@ -644,6 +653,7 @@ const internalRenderMediaRaw = ({
 					compositionStart,
 					forSeamlessAacConcatenation,
 					onBrowserDownload,
+					onArtifact,
 				});
 
 				return renderFramesProc;
@@ -667,58 +677,56 @@ const internalRenderMediaRaw = ({
 				}
 
 				const stitchStart = Date.now();
-				return Promise.all([
-					internalStitchFramesToVideo({
-						width: composition.width * scale,
-						height: composition.height * scale,
-						fps,
-						outputLocation: absoluteOutputLocation,
-						preEncodedFileLocation,
-						preferLossless,
-						indent,
-						force: overwrite,
-						pixelFormat,
-						codec,
-						proResProfile,
-						crf,
-						assetsInfo,
-						onProgress: (frame: number) => {
-							stitchStage = 'muxing';
-							if (preEncodedFileLocation) {
-								muxedFrames = frame;
-							} else {
-								muxedFrames = frame;
-								encodedFrames = frame;
-							}
+				return internalStitchFramesToVideo({
+					width: composition.width * scale,
+					height: composition.height * scale,
+					fps,
+					outputLocation: absoluteOutputLocation,
+					preEncodedFileLocation,
+					preferLossless,
+					indent,
+					force: overwrite,
+					pixelFormat,
+					codec,
+					proResProfile,
+					crf,
+					assetsInfo,
+					onProgress: (frame: number) => {
+						stitchStage = 'muxing';
+						if (preEncodedFileLocation) {
+							muxedFrames = frame;
+						} else {
+							muxedFrames = frame;
+							encodedFrames = frame;
+						}
 
-							if (encodedFrames === totalFramesToRender) {
-								encodedDoneIn = Date.now() - stitchStart;
-							}
+						if (encodedFrames === totalFramesToRender) {
+							encodedDoneIn = Date.now() - stitchStart;
+						}
 
-							if (frame > 0) {
-								callUpdate();
-							}
-						},
-						onDownload,
-						numberOfGifLoops,
-						logLevel,
-						cancelSignal: cancelStitcher.cancelSignal,
-						muted: disableAudio,
-						enforceAudioTrack,
-						ffmpegOverride: ffmpegOverride ?? null,
-						audioBitrate,
-						videoBitrate,
-						encodingBufferSize,
-						encodingMaxRate,
-						audioCodec,
-						x264Preset: x264Preset ?? null,
-						colorSpace,
-						binariesDirectory,
-						separateAudioTo,
-					}),
-				]);
+						if (frame > 0) {
+							callUpdate();
+						}
+					},
+					onDownload,
+					numberOfGifLoops,
+					logLevel,
+					cancelSignal: cancelStitcher.cancelSignal,
+					muted: disableAudio,
+					enforceAudioTrack,
+					ffmpegOverride: ffmpegOverride ?? null,
+					audioBitrate,
+					videoBitrate,
+					encodingBufferSize,
+					encodingMaxRate,
+					audioCodec,
+					x264Preset: x264Preset ?? null,
+					colorSpace,
+					binariesDirectory,
+					separateAudioTo,
+				});
 			})
-			.then(([buffer]) => {
+			.then((buffer) => {
 				Log.verbose(
 					{indent, logLevel},
 					'Stitching done in',
@@ -792,14 +800,11 @@ const internalRenderMediaRaw = ({
 			});
 	});
 
-	return Promise.race([
+	return succeedOrCancel({
 		happyPath,
-		new Promise<RenderMediaResult>((_resolve, reject) => {
-			cancelSignal?.(() => {
-				reject(new Error(cancelErrorMessages.renderMedia));
-			});
-		}),
-	]);
+		cancelSignal,
+		cancelMessage: cancelErrorMessages.renderMedia,
+	});
 };
 
 export const internalRenderMedia = wrapWithErrorHandling(
@@ -863,6 +868,7 @@ export const renderMedia = ({
 	separateAudioTo,
 	forSeamlessAacConcatenation,
 	onBrowserDownload,
+	onArtifact,
 }: RenderMediaOptions): Promise<RenderMediaResult> => {
 	if (quality !== undefined) {
 		console.warn(
@@ -937,6 +943,7 @@ export const renderMedia = ({
 		onBrowserDownload:
 			onBrowserDownload ??
 			defaultBrowserDownloadProgress({indent, logLevel, api: 'renderMedia()'}),
+		onArtifact: onArtifact ?? null,
 		// TODO: In the future, introduce this as a public API when launching the distributed rendering API
 		compositionStart: 0,
 	});

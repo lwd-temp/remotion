@@ -35,6 +35,8 @@ type OptionalParameters = {
 	indent: boolean;
 	logLevel: LogLevel;
 	enableV5Runtime: boolean;
+	vpcSubnetIds: string | undefined;
+	vpcSecurityGroupIds: string | undefined;
 };
 
 export type DeployFunctionInput = MandatoryParameters &
@@ -93,6 +95,8 @@ export const internalDeployFunction = async (
 		enableLambdaInsights: params.enableLambdaInsights ?? false,
 		enableV5Runtime: params.enableV5Runtime,
 		logLevel: params.logLevel,
+		vpcSubnetIds: params.vpcSubnetIds as string,
+		vpcSecurityGroupIds: params.vpcSecurityGroupIds as string,
 	});
 
 	if (!created.FunctionName) {
@@ -105,9 +109,7 @@ export const internalDeployFunction = async (
 	};
 };
 
-export const errorHandled = NoReactAPIs.wrapWithErrorHandling(
-	internalDeployFunction,
-);
+const errorHandled = NoReactAPIs.wrapWithErrorHandling(internalDeployFunction);
 
 /**
  * @description Creates an AWS Lambda function in your account that will be able to render a video in the cloud.
@@ -132,6 +134,8 @@ export const deployFunction = ({
 	indent,
 	logLevel,
 	enableV5Runtime,
+	vpcSubnetIds,
+	vpcSecurityGroupIds,
 	...options
 }: DeployFunctionInput) => {
 	const diskSizeInMb = options.diskSizeInMb ?? DEFAULT_EPHEMERAL_STORAGE_IN_MB;
@@ -149,5 +153,7 @@ export const deployFunction = ({
 		cloudWatchLogRetentionPeriodInDays,
 		enableV5Runtime:
 			enableV5Runtime ?? NoReactInternals.ENABLE_V5_BREAKING_CHANGES,
+		vpcSubnetIds,
+		vpcSecurityGroupIds,
 	});
 };

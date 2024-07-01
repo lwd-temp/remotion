@@ -1,4 +1,5 @@
 import type {Browser} from './browser';
+import {addHeadlessBrowser} from './browser-instances';
 import type {HeadlessBrowser} from './browser/Browser';
 import {defaultBrowserDownloadProgress} from './browser/browser-download-progress-bar';
 import {puppeteer} from './browser/node';
@@ -24,6 +25,22 @@ export type ChromiumOptions = {
 	enableMultiProcessOnLinux?: boolean;
 };
 
+const featuresToEnable = (option?: OpenGlRenderer | null) => {
+	const renderer = option ?? DEFAULT_OPENGL_RENDERER;
+
+	const enableAlways = ['NetworkService', 'NetworkServiceInProcess'];
+
+	if (renderer === 'vulkan') {
+		return [...enableAlways, 'Vulkan', 'UseSkiaRenderer'];
+	}
+
+	if (renderer === 'angle-egl') {
+		return [...enableAlways, 'VaapiVideoDecoder'];
+	}
+
+	return enableAlways;
+};
+
 const getOpenGlRenderer = (option?: OpenGlRenderer | null): string[] => {
 	const renderer = option ?? DEFAULT_OPENGL_RENDERER;
 	validateOpenGlRenderer(renderer);
@@ -41,7 +58,6 @@ const getOpenGlRenderer = (option?: OpenGlRenderer | null): string[] => {
 			'--use-vulkan=swiftshader',
 			'--disable-vulkan-fallback-to-gl-for-testing',
 			'--dignore-gpu-blocklist',
-			'--enable-features=Vulkan,UseSkiaRenderer',
 		];
 	}
 
@@ -50,16 +66,6 @@ const getOpenGlRenderer = (option?: OpenGlRenderer | null): string[] => {
 	}
 
 	return [`--use-gl=${renderer}`];
-};
-
-const browserInstances: HeadlessBrowser[] = [];
-
-export const killAllBrowsers = async () => {
-	for (const browser of browserInstances) {
-		try {
-			await browser.close(true, 'info', false);
-		} catch (err) {}
-	}
 };
 
 type InternalOpenBrowserOptions = {
@@ -131,7 +137,7 @@ export const internalOpenBrowser = async ({
 			'about:blank',
 			'--allow-pre-commit-input',
 			'--disable-background-networking',
-			'--enable-features=NetworkService,NetworkServiceInProcess',
+			`--enable-features=${featuresToEnable(chromiumOptions.gl).join(',')}`,
 			'--disable-background-timer-throttling',
 			'--disable-backgrounding-occluded-windows',
 			'--disable-breakpad',
@@ -153,7 +159,7 @@ export const internalOpenBrowser = async ({
 			'--metrics-recording-only',
 			'--mute-audio',
 			'--no-first-run',
-			'--video-threads=' + getIdealVideoThreadsFlag(logLevel),
+			`--video-threads=${getIdealVideoThreadsFlag(logLevel)}`,
 			'--enable-automation',
 			'--password-store=basic',
 			'--use-mock-keychain',
@@ -207,7 +213,7 @@ export const internalOpenBrowser = async ({
 	const pages = await browserInstance.pages(logLevel, indent);
 	await pages[0].close();
 
-	browserInstances.push(browserInstance);
+	addHeadlessBrowser(browserInstance);
 	return browserInstance;
 };
 

@@ -126,7 +126,7 @@ export type TSequence = {
 	premountDisplay: number | null;
 } & EnhancedTSequenceData;
 
-export type TRenderAsset = {
+export type AudioOrVideoAsset = {
 	type: 'audio' | 'video';
 	src: string;
 	id: string;
@@ -138,6 +138,17 @@ export type TRenderAsset = {
 	toneFrequency: number | null;
 	audioStartFrame: number;
 };
+
+export type ArtifactAsset = {
+	type: 'artifact';
+	id: string;
+	filename: string;
+	content: string | Uint8Array;
+	frame: number;
+	binary: boolean;
+};
+
+export type TRenderAsset = AudioOrVideoAsset | ArtifactAsset;
 
 export const compositionsRef = React.createRef<{
 	getCompositions: () => AnyComposition[];
@@ -238,6 +249,26 @@ export const CompositionManagerProvider: React.FC<{
 			: null,
 	);
 
+	const updateCompositionDefaultProps = useCallback(
+		(id: string, newDefaultProps: Record<string, unknown>) => {
+			setCompositions((comps) => {
+				const updated = comps.map((c) => {
+					if (c.id === id) {
+						return {
+							...c,
+							defaultProps: newDefaultProps,
+						};
+					}
+
+					return c;
+				});
+
+				return updated;
+			});
+		},
+		[],
+	);
+
 	const contextValue = useMemo((): CompositionManagerContext => {
 		return {
 			compositions,
@@ -250,6 +281,7 @@ export const CompositionManagerProvider: React.FC<{
 			setCurrentCompositionMetadata,
 			canvasContent,
 			setCanvasContent,
+			updateCompositionDefaultProps,
 		};
 	}, [
 		compositions,
@@ -260,7 +292,7 @@ export const CompositionManagerProvider: React.FC<{
 		unregisterFolder,
 		currentCompositionMetadata,
 		canvasContent,
-		setCanvasContent,
+		updateCompositionDefaultProps,
 	]);
 
 	return (

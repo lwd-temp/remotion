@@ -43,7 +43,7 @@ import {DEFAULT_JPEG_QUALITY, validateJpegQuality} from './jpeg-quality';
 import {isEqualOrBelowLogLevel, isValidLogLevel, logLevels} from './log-level';
 import {INDENT_TOKEN, Log} from './logger';
 import {mimeContentType, mimeLookup} from './mime-types';
-import {internalOpenBrowser, killAllBrowsers} from './open-browser';
+import {internalOpenBrowser} from './open-browser';
 import {
 	DEFAULT_OPENGL_RENDERER,
 	validOpenGlRenderers,
@@ -108,7 +108,7 @@ export {X264Preset} from './options/x264-preset';
 export {PixelFormat} from './pixel-format';
 export {RemotionServer} from './prepare-server';
 export {ProResProfile} from './prores-profile';
-export {RenderFramesOptions, renderFrames} from './render-frames';
+export {OnArtifact, RenderFramesOptions, renderFrames} from './render-frames';
 export {
 	InternalRenderMediaOptions,
 	RenderMediaOnProgress,
@@ -122,6 +122,7 @@ export {
 	SelectCompositionOptions,
 	selectComposition,
 } from './select-composition';
+export {EmittedArtifact} from './serialize-artifact';
 export {
 	StitchFramesToVideoOptions,
 	stitchFramesToVideo,
@@ -132,6 +133,7 @@ export {validateOutputFilename} from './validate-output-filename';
 export type {AudioCodec};
 
 import {makeDownloadMap} from './assets/download-map';
+import {killAllBrowsers} from './browser-instances';
 import {codecSupportsMedia} from './codec-supports-media';
 import {makeFileExecutableIfItIsNot} from './compositor/make-file-executable';
 import {internalEnsureBrowser} from './ensure-browser';

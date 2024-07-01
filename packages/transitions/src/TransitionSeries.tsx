@@ -7,6 +7,10 @@ import type {
 } from 'remotion';
 import {Internals, Sequence, useCurrentFrame, useVideoConfig} from 'remotion';
 import {NoReactInternals} from 'remotion/no-react';
+import {
+	WrapInEnteringProgressContext,
+	WrapInExitingProgressContext,
+} from './context.js';
 import {flattenChildren} from './flatten-children.js';
 import {slide} from './presentations/slide.js';
 import type {TransitionSeriesTransitionProps} from './types.js';
@@ -42,7 +46,7 @@ type SeriesSequenceProps = PropsWithChildren<
 
 const SeriesSequence = ({children}: SeriesSequenceProps) => {
 	// eslint-disable-next-line react/jsx-no-useless-fragment
-	return children;
+	return <>{children}</>;
 };
 
 type TransitionType<PresentationProps extends Record<string, unknown>> = {
@@ -248,14 +252,26 @@ const TransitionSeriesChildren: FC<{readonly children: React.ReactNode}> = ({
 							passedProps={nextPresentation.props ?? {}}
 							presentationDirection="exiting"
 							presentationProgress={nextProgress}
+							presentationDurationInFrames={next.props.timing.getDurationInFrames(
+								{fps},
+							)}
 						>
-							<UppercasePrevPresentation
-								passedProps={prevPresentation.props ?? {}}
-								presentationDirection="entering"
-								presentationProgress={prevProgress}
-							>
-								{child}
-							</UppercasePrevPresentation>
+							<WrapInExitingProgressContext presentationProgress={nextProgress}>
+								<UppercasePrevPresentation
+									passedProps={prevPresentation.props ?? {}}
+									presentationDirection="entering"
+									presentationProgress={prevProgress}
+									presentationDurationInFrames={prev.props.timing.getDurationInFrames(
+										{fps},
+									)}
+								>
+									<WrapInEnteringProgressContext
+										presentationProgress={prevProgress}
+									>
+										{child}
+									</WrapInEnteringProgressContext>
+								</UppercasePrevPresentation>
+							</WrapInExitingProgressContext>
 						</UppercaseNextPresentation>
 					</Sequence>
 				);
@@ -279,8 +295,15 @@ const TransitionSeriesChildren: FC<{readonly children: React.ReactNode}> = ({
 							passedProps={prevPresentation.props ?? {}}
 							presentationDirection="entering"
 							presentationProgress={prevProgress}
+							presentationDurationInFrames={prev.props.timing.getDurationInFrames(
+								{fps},
+							)}
 						>
-							{child}
+							<WrapInEnteringProgressContext
+								presentationProgress={prevProgress}
+							>
+								{child}
+							</WrapInEnteringProgressContext>
 						</UppercasePrevPresentation>
 					</Sequence>
 				);
@@ -304,8 +327,13 @@ const TransitionSeriesChildren: FC<{readonly children: React.ReactNode}> = ({
 							passedProps={nextPresentation.props ?? {}}
 							presentationDirection="exiting"
 							presentationProgress={nextProgress}
+							presentationDurationInFrames={next.props.timing.getDurationInFrames(
+								{fps},
+							)}
 						>
-							{child}
+							<WrapInExitingProgressContext presentationProgress={nextProgress}>
+								{child}
+							</WrapInExitingProgressContext>
 						</UppercaseNextPresentation>
 					</Sequence>
 				);
